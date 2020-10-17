@@ -37,20 +37,10 @@ jobs:
     - name: Run tests
       run: cargo test
 
+  # Windows does not have tests ( do not know at the moment how to test postgres )
   windows:
     runs-on: windows-latest
-    services:
-      postgres:
-        image: postgres:11-alpine
-        env:
-          POSTGRES_USER: user
-          POSTGRES_PASSWORD: pass
-          POSTGRES_DB: test_db
-        ports:
-          - 5444:5432
     steps:
     - uses: actions/checkout@v1
     - name: Build
       run: cargo build 
-    - name: Run tests
-      run: cargo test -- --nocapture

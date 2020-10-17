@@ -25,11 +25,11 @@ impl CreateCar {
 }
 
 #[tokio::test]
-async fn test_gmacro() {
+async fn test_macro_insert() {
     let car_skoda = CreateCar::new("Skoda");
     let car_tesla = CreateCar::new("Tesla");
 
-    let url = "postgres://user:pass@localhost:5440/test_db";
+    let url = "postgres://user:pass@localhost:5444/test_db";
 
     let pool = sqlx::PgPool::builder()
         .connect_timeout(std::time::Duration::from_secs(30))
