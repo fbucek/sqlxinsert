@@ -32,7 +32,7 @@ impl Car {
 }
 
 #[tokio::test]
-async fn test_macro_sqlite_insert() {
+async fn test_macro_sqlite_insert_raw() {
     let car = Car {
         car_id: 33,
         car_name: "Skoda".to_string(),

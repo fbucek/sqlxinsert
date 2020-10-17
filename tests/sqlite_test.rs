@@ -11,7 +11,7 @@ struct Car {
 }
 
 #[tokio::test]
-async fn test_sqlite_gmacro() {
+async fn test_macro_sqlite_insert() {
     let car = Car {
         car_id: 33,
         car_name: "Skoda".to_string(),
