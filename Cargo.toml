@@ -3,6 +3,11 @@ name = "sqlxinsert"
 version = "0.1.0"
 authors = ["Filip Bucek <fbucek@invloop.cz>"]
 edition = "2018"
+license = "MIT"
+description = "Sqlx derive macro for simpler inserts"
+repository = "https://github.com/fbucek/sqlxinsert"
+readme = "README.md"
+exclude = [".github/*"]
 
 [lib]
 proc-macro = true

@@ -1,6 +1,6 @@
-.PHONY: all doc initdocker rmdocker test
+.PHONY: testall doc initdocker rmdocker test
 
-all: initdocker test rmdocker
+testall: initdocker test rmdocker
 
 # Docker used only for testing postgres database
 initdocker:
@@ -23,4 +23,3 @@ doc:
 	cargo doc --no-deps --open
 clean:
 	cargo clean --doc
-

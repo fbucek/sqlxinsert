@@ -64,4 +64,4 @@ async fn main() -> eyre::Result<()>{
 
 Requirements: `docker` installed
 
-`make all` will crete docker
+`make testall`
