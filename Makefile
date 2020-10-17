@@ -1,5 +1,6 @@
 .PHONY: testall doc initdocker rmdocker test
 
+all: check initdocker test rmdocker doc
 testall: initdocker test rmdocker
 
 # Docker used only for testing postgres database
