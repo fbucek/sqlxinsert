@@ -5,14 +5,15 @@ on: [push]
 jobs:
   ubuntu:
     runs-on: ubuntu-latest
-    postgres:
-      image: postgres:11-alpine
-      env:
-        POSTGRES_USER: user
-        POSTGRES_PASSWORD: pass
-        POSTGRES_DB: test_db
-      ports:
-        - 5444:5432
+    services:
+      postgres:
+        image: postgres:11-alpine
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: pass
+          POSTGRES_DB: test_db
+        ports:
+          - 5444:5432
     steps:
     - uses: actions/checkout@v2
     - run: cargo build
