@@ -1,0 +1,12 @@
+version: "3.1"
+services: 
+  postgres:
+    image: postgres:11-alpine
+    restart: always
+    container_name: sqlxinsert-db-test
+    environment:
+      POSTGRES_PASSWORD: pass
+      POSTGRES_USER: user
+      POSTGRES_DB: test_db
+    ports:
+      - 5444:5432 

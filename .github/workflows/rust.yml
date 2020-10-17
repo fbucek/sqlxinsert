@@ -1,0 +1,55 @@
+name: build
+
+on: [push]
+
+jobs:
+  ubuntu:
+    runs-on: ubuntu-latest
+    postgres:
+      image: postgres:11-alpine
+      env:
+        POSTGRES_USER: user
+        POSTGRES_PASSWORD: pass
+        POSTGRES_DB: test_db
+      ports:
+        - 5444:5432
+    steps:
+    - uses: actions/checkout@v2
+    - run: cargo build
+    - run: cargo test
+
+  macos:
+    runs-on: macos-latest
+    services:
+      postgres:
+        image: postgres:11-alpine
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: pass
+          POSTGRES_DB: test_db
+        ports:
+          - 5444:5432
+    steps:
+    - uses: actions/checkout@v1
+    - name: Build
+      run: cargo build 
+    - name: Run tests
+      run: cargo test
+
+  windows:
+    runs-on: windows-latest
+    services:
+      postgres:
+        image: postgres:11-alpine
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: pass
+          POSTGRES_DB: test_db
+        ports:
+          - 5444:5432
+    steps:
+    - uses: actions/checkout@v1
+    - name: Build
+      run: cargo build 
+    - name: Run tests
+      run: cargo test -- --nocapture
