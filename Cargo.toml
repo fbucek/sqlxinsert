@@ -1,6 +1,6 @@
 [package]
 name = "sqlxinsert"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Filip Bucek <fbucek@invloop.cz>"]
 edition = "2018"
 license = "MIT"
