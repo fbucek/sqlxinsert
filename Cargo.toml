@@ -22,4 +22,3 @@ sqlx = { version = "0.4", default-features = false, features = ["runtime-tokio-r
 [dev-dependencies]
 tokio = { version = "0.2", features= ["rt-threaded",  "macros"] }
 sqlx = { version = "0.4", default-features = false, features = ["runtime-tokio-rustls", "macros", "sqlite", "postgres"] }
-
