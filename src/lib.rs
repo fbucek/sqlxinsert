@@ -16,10 +16,10 @@ fn dollar_values(max: usize) -> String {
 
 /// Create method for inserting struts into Sqlite database
 ///
-/// ```rust,ignore
+/// ```rust
 /// # #[tokio::main]
 /// # async fn main() -> eyre::Result<()>{
-/// #[derive(Default, Debug, sqlx::FromRow, gmacro::SqliteInsert)]
+/// #[derive(Default, Debug, sqlx::FromRow, sqlxinsert::SqliteInsert)]
 /// struct Car {
 ///     pub car_id: i32,
 ///     pub car_name: String,
@@ -29,9 +29,12 @@ fn dollar_values(max: usize) -> String {
 ///     car_id: 33,
 ///     car_name: "Skoda".to_string(),
 /// };
-/// // bug: https://github.com/launchbadge/sqlx/issues/530
+///
 /// let url = "sqlite:%3Amemory:";
-/// let pool = sqlx::SqlitePool::builder().build(&url).await.unwrap();
+/// let pool = sqlx::sqlite::SqlitePoolOptions::new().connect(url).await.unwrap();
+///
+/// let create_table = "create table cars ( car_id INTEGER PRIMARY KEY, car_name TEXT NOT NULL )";
+/// sqlx::query(create_table).execute(&pool).await.expect("Not possible to execute");
 ///
 /// let res = car.insert(&pool, "cars").await.unwrap();
 /// # Ok(())
@@ -74,15 +77,14 @@ pub fn derive_from_struct_sqlite(input: TokenStream) -> TokenStream {
                 sqlquery
             }
 
-            pub async fn insert(&self, mut pool: &sqlx::Pool<sqlx::SqliteConnection>, table: &str) -> eyre::Result<u64>
+            pub async fn insert(&self, pool: &sqlx::SqlitePool, table: &str) -> eyre::Result<sqlx::sqlite::SqliteDone>
             {
                 let sql = self.insert_query(table);
-                let mut pool = pool;
                 Ok(sqlx::query(&sql)
                 #(
                     .bind(&self.#field_name2)//         let #field_name: #field_type = Default::default();
                 )*
-                    .execute(&mut pool)// (&mut conn)
+                    .execute(pool)// (&mut conn)
                     .await?
                 )
             }
@@ -116,10 +118,10 @@ pub fn derive_from_struct_sqlite(input: TokenStream) -> TokenStream {
 ///     }
 /// }
 /// let url = "postgres://user:pass@localhost:5432/test_db";
-/// let pool = sqlx::SqlitePool::builder().build(&url).await.unwrap();
+/// let pool = sqlx::postgres::PgPoolOptions::new().connect(&url).await.unwrap();
 ///
 /// let car_skoda = CreateCar::new("Skoda");
-/// let res: Car = car_skoda.insert::<Car>(&pool, "cars").await?;
+/// let res: Car = car_skoda.insert::<Car>(pool, "cars").await?;
 /// # Ok(())
 /// # }
 /// ```
@@ -164,19 +166,20 @@ pub fn derive_from_struct_psql(input: TokenStream) -> TokenStream {
                 sqlquery
             }
 
-            pub async fn insert<T>(&self, mut pool: &sqlx::Pool<sqlx::PgConnection>, table: &str) -> eyre::Result<T>
+            pub async fn insert<T>(&self, pool: &sqlx::PgPool, table: &str) -> eyre::Result<T>
             where
                 T: Send,
-                T: for<'c> sqlx::FromRow<'c, sqlx::postgres::PgRow<'c>>
+                T: for<'c> sqlx::FromRow<'c, sqlx::postgres::PgRow>,
+                T: std::marker::Unpin
             {
                 let sql = self.insert_query(table);
 
-                let mut pool = pool;
+                // let mut pool = pool;
                 let res: T = sqlx::query_as::<_,T>(&sql)
                 #(
                     .bind(&self.#field_name_values)//         let #field_name: #field_type = Default::default();
                 )*
-                    .fetch_one(&mut pool)
+                    .fetch_one(pool)
                     .await?;
 
                 Ok(res)

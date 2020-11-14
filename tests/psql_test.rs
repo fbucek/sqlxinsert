@@ -1,7 +1,7 @@
 // extern crate we're testing, same as any other code will do.
 //extern crate gmacro;
 
-use sqlx::prelude::PgQueryAs;
+// use sqlx::PgQuery;
 
 // #[derive(Default, Debug, sqlx::FromRow)]
 #[derive(Default, Debug, std::cmp::PartialEq, sqlx::FromRow)]
@@ -31,9 +31,9 @@ async fn test_macro_insert() {
 
     let url = "postgres://user:pass@localhost:5444/test_db";
 
-    let pool = sqlx::PgPool::builder()
+    let pool = sqlx::postgres::PgPoolOptions::new()
         .connect_timeout(std::time::Duration::from_secs(30))
-        .build(&url)
+        .connect(&url)
         .await
         .expect("Not possible to create pool");
 

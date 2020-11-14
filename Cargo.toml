@@ -1,6 +1,6 @@
 [package]
 name = "sqlxinsert"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Filip Bucek <fbucek@invloop.cz>"]
 edition = "2018"
 license = "MIT"
@@ -17,9 +17,9 @@ eyre = "0.6"
 quote = "1.0"
 syn = "1.0"
 async-trait = "0.1"
-sqlx = { version = "0.3", default-features = false, features = ["runtime-tokio", "sqlite", "postgres"] }
+sqlx = { version = "0.4", default-features = false, features = ["runtime-tokio-rustls", "sqlite", "postgres"] }
 
 [dev-dependencies]
 tokio = { version = "0.2", features= ["rt-threaded",  "macros"] }
-sqlx = { version = "0.3", default-features = false, features = ["runtime-tokio", "macros", "sqlite", "postgres"] }
+sqlx = { version = "0.4", default-features = false, features = ["runtime-tokio-rustls", "macros", "sqlite", "postgres"] }
 

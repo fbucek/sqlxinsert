@@ -4,33 +4,40 @@ struct Car {
     pub car_id: i32,
     pub car_name: String,
 }
-#[derive(Default, Debug, sqlx::FromRow)]
-struct CreateCar {
-    pub car_name: String,
-}
 
 impl Car {
-    pub async fn insert(
-        &self,
-        pool: &sqlx::PgPool,
-        table: &str,
-    ) -> eyre::Result<sqlx::postgres::PgDone> {
+    pub async fn insert<T>(&self, pool: &sqlx::PgPool, table: &str) -> eyre::Result<T>
+    where
+        T: Send,
+        T: for<'c> sqlx::FromRow<'c, sqlx::postgres::PgRow>,
+        T: std::marker::Unpin,
+    {
         let sql = self.insert_query(table);
-        let res = sqlx::query(&sql).execute(pool).await.unwrap();
+        // let res = sqlx::query(&sql).execute(pool).await?;
+        let res: T = sqlx::query_as::<_, T>(&sql)
+            .bind(&self.car_name)
+            .fetch_one(pool)
+            .await?;
+
         Ok(res)
     }
     fn insert_query(&self, table: &str) -> String {
         format!(
-            "insert into {} ( car_id, car_name) values ( '{}', '{}' ) returning *",
+            "insert into {} ( car_id, car_name ) values ( '{}', '{}' ) returning *",
             table, self.car_id, self.car_name
         )
     }
 }
 
 #[tokio::test]
-async fn test_macro_psql_insert() {
+async fn test_macro_psql_insert_generic() {
+    // let car = Car {
+    //     car_id: 33,
+    //     car_name: "Skoda".to_string(),
+    // };
+
     let car = Car {
-        car_id: 33,
+        car_id: 34,
         car_name: "Skoda".to_string(),
     };
 
@@ -56,7 +63,7 @@ async fn test_macro_psql_insert() {
         .await
         .expect("Not possible to cretae table");
 
-    car.insert(&pool, "cars")
+    car.insert::<Car>(&pool, "cars")
         .await
         .expect("Not possible to insert into dabase");
 

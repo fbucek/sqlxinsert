@@ -1,26 +1,21 @@
-// extern crate we're testing, same as any other code will do.
-//extern crate gmacro;
-
-use sqlx::prelude::SqliteQueryAs;
-use sqlx::Connect;
-use sqlx::Executor;
-
-// #[derive(Default, Debug, sqlx::FromRow)]
 #[derive(Default, Debug, sqlx::FromRow)]
 struct Car {
     pub car_id: i32,
     pub car_name: String,
 }
+#[derive(Default, Debug, sqlx::FromRow)]
+struct CreateCar {
+    pub car_name: String,
+}
 
 impl Car {
-    pub async fn insert<T>(&self, mut conn: &mut T, table: &str) -> eyre::Result<u64>
-    where
-        T: sqlx::Connect,
-        T: sqlx::Executor,
-        // T: std::marker::Copy,
-    {
+    pub async fn insert(
+        &self,
+        pool: &sqlx::SqlitePool,
+        table: &str,
+    ) -> eyre::Result<sqlx::sqlite::SqliteDone> {
         let sql = self.insert_query(table);
-        let res = sqlx::query(&sql).execute(&mut conn).await.unwrap();
+        let res = sqlx::query(&sql).execute(pool).await?;
         Ok(res)
     }
     fn insert_query(&self, table: &str) -> String {
@@ -31,7 +26,7 @@ impl Car {
     }
 }
 
-#[tokio::test]
+#[tokio::test(threaded_scheduler)]
 async fn test_macro_sqlite_insert_raw() {
     let car = Car {
         car_id: 33,
@@ -39,21 +34,38 @@ async fn test_macro_sqlite_insert_raw() {
     };
 
     // bug: https://github.com/launchbadge/sqlx/issues/530
-    let mut conn = sqlx::SqliteConnection::connect("sqlite:%3Amemory:")
+    // let pool = sqlx::SqlitePool::connect("sqlite:memory:")
+    //     .await
+    //     .expect("Not possible to create pool");
+
+    //let mut conn = pool.acquire().await.unwrap();
+
+    let url = "sqlite:%3Amemory:";
+
+    let pool = sqlx::sqlite::SqlitePoolOptions::new()
+        .connect(url)
         .await
-        .unwrap();
-    // .expect("Not possible to create connection");
+        .expect("Not possible to create pool");
+
+    // let mut conn = sqlx::sqlite::SqliteConnectOptions::from_str("sqlite:memory:")
+    //     .expect("Constructing from string")
+    //     .connect()
+    //     .await
+    //     .expect("Not possible to create connection");
+
+    // let mut conn = pool.acquire
 
     let create_table = "create table cars (
         car_id INTEGER PRIMARY KEY,
         car_name TEXT NOT NULL
     )";
 
-    conn.execute(sqlx::query(create_table))
+    sqlx::query(create_table)
+        .execute(&pool)
         .await
-        .expect("Not possible to execute");
+        .expect("Not possible to cretae table");
 
-    car.insert(&mut conn, "cars")
+    car.insert(&pool, "cars")
         .await
         .expect("Not possible to insert into dabase");
 
@@ -67,7 +79,7 @@ async fn test_macro_sqlite_insert_raw() {
     //         .unwrap();
 
     let rows = sqlx::query_as::<_, Car>("SELECT * FROM cars")
-        .fetch_all(&mut conn)
+        .fetch_all(&pool)
         .await
         .expect("Not possible to fetch");
 

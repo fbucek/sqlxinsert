@@ -1,8 +1,6 @@
 // extern crate we're testing, same as any other code will do.
 //extern crate gmacro;
 
-use sqlx::prelude::SqliteQueryAs;
-
 // #[derive(Default, Debug, sqlx::FromRow)]
 #[derive(Default, Debug, sqlx::FromRow, sqlxinsert::SqliteInsert)]
 struct Car {
@@ -10,7 +8,7 @@ struct Car {
     pub car_name: String,
 }
 
-#[tokio::test]
+#[tokio::test(threaded_scheduler)]
 async fn test_macro_sqlite_insert() {
     let car = Car {
         car_id: 33,
@@ -20,7 +18,10 @@ async fn test_macro_sqlite_insert() {
     // bug: https://github.com/launchbadge/sqlx/issues/530
     let url = "sqlite:%3Amemory:";
 
-    let pool = sqlx::SqlitePool::builder().build(&url).await.unwrap();
+    let pool = sqlx::sqlite::SqlitePoolOptions::new()
+        .connect(url)
+        .await
+        .expect("Not possible to create pool");
 
     let create_table = "create table cars (
         car_id INTEGER PRIMARY KEY,
@@ -33,7 +34,7 @@ async fn test_macro_sqlite_insert() {
 
     let res = car.insert(&pool, "cars").await.unwrap();
 
-    assert_eq!(res, 1);
+    assert_eq!(res.last_insert_rowid(), 33);
 
     let rows = sqlx::query_as::<_, Car>("SELECT * FROM cars")
         .fetch_all(&pool)
