@@ -32,7 +32,7 @@ async fn test_macro_sqlite_insert() {
         .await
         .expect("Not possible to execute");
 
-    let res = car.insert(&pool, "cars").await.unwrap();
+    let res = car.insert_raw(&pool, "cars").await.unwrap();
 
     assert_eq!(res.last_insert_rowid(), 33);
 

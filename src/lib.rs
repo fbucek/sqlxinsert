@@ -36,7 +36,7 @@ fn dollar_values(max: usize) -> String {
 /// let create_table = "create table cars ( car_id INTEGER PRIMARY KEY, car_name TEXT NOT NULL )";
 /// sqlx::query(create_table).execute(&pool).await.expect("Not possible to execute");
 ///
-/// let res = car.insert(&pool, "cars").await.unwrap();
+/// let res = car.insert_raw(&pool, "cars").await.unwrap(); // returning id
 /// # Ok(())
 /// # }
 /// ```
@@ -77,7 +77,7 @@ pub fn derive_from_struct_sqlite(input: TokenStream) -> TokenStream {
                 sqlquery
             }
 
-            pub async fn insert(&self, pool: &sqlx::SqlitePool, table: &str) -> eyre::Result<sqlx::sqlite::SqliteDone>
+            pub async fn insert_raw(&self, pool: &sqlx::SqlitePool, table: &str) -> eyre::Result<sqlx::sqlite::SqliteDone>
             {
                 let sql = self.insert_query(table);
                 Ok(sqlx::query(&sql)
