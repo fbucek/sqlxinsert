@@ -71,7 +71,7 @@ async fn test_macro_sqlite_insert_generic() {
         .await
         .expect("Not possible to cretae table");
 
-    let car = car
+    let _car = car
         .insert::<Car>(&pool, "cars")
         .await
         .expect("Not possible to insert into dabase");

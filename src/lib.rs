@@ -104,7 +104,7 @@ pub fn derive_from_struct_sqlite(input: TokenStream) -> TokenStream {
 ///     pub name: String,
 /// }
 ///
-/// #[derive(Default, Debug, sqlx::FromRow, sqlxinsert::PqInsert)]
+/// #[derive(Default, Debug, sqlx::FromRow, sqlxinsert::PgInsert)]
 /// struct CreateCar {
 ///     pub name: String,
 ///     pub color: Option<String>,
@@ -126,7 +126,7 @@ pub fn derive_from_struct_sqlite(input: TokenStream) -> TokenStream {
 /// # }
 /// ```
 ///
-#[proc_macro_derive(PqInsert)]
+#[proc_macro_derive(PgInsert)]
 pub fn derive_from_struct_psql(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
