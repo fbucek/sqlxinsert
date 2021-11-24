@@ -13,7 +13,7 @@ impl Car {
         &self,
         pool: &sqlx::SqlitePool,
         table: &str,
-    ) -> eyre::Result<sqlx::sqlite::SqliteDone> {
+    ) -> eyre::Result<sqlx::sqlite::SqliteQueryResult> {
         let sql = self.insert_query(table);
         let res = sqlx::query(&sql).execute(pool).await?;
         Ok(res)
@@ -26,7 +26,7 @@ impl Car {
     }
 }
 
-#[tokio::test(threaded_scheduler)]
+#[tokio::test]
 async fn test_macro_sqlite_insert_raw() {
     let car = Car {
         car_id: 33,

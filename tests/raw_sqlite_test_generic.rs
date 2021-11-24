@@ -14,8 +14,7 @@ impl Car {
     {
         let sql = self.insert_query(table);
         // let res = sqlx::query(&sql).execute(pool).await?;
-        let res: sqlx::sqlite::SqliteDone =
-            sqlx::query(&sql).bind(&self.car_name).execute(pool).await?;
+        let res = sqlx::query(&sql).bind(&self.car_name).execute(pool).await?;
 
         let sql = format!(
             "select * from {} where id={}",
@@ -53,7 +52,7 @@ async fn test_macro_sqlite_insert_generic() {
 
     let pool = sqlx::sqlite::SqlitePoolOptions::new()
         .connect_timeout(std::time::Duration::from_secs(30))
-        .connect(&url)
+        .connect(url)
         .await
         .expect("Not possible to create pool");
 

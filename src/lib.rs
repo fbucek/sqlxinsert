@@ -77,7 +77,7 @@ pub fn derive_from_struct_sqlite(input: TokenStream) -> TokenStream {
                 sqlquery
             }
 
-            pub async fn insert_raw(&self, pool: &sqlx::SqlitePool, table: &str) -> eyre::Result<sqlx::sqlite::SqliteDone>
+            pub async fn insert_raw(&self, pool: &sqlx::SqlitePool, table: &str) -> eyre::Result<sqlx::sqlite::SqliteQueryResult>
             {
                 let sql = self.insert_query(table);
                 Ok(sqlx::query(&sql)
