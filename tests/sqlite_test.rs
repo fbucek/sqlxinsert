@@ -16,7 +16,7 @@ async fn test_macro_sqlite_insert() {
     };
 
     // bug: https://github.com/launchbadge/sqlx/issues/530
-    let url = "sqlite:%3Amemory:";
+    let url = "sqlite::memory:";
 
     let pool = sqlx::sqlite::SqlitePoolOptions::new()
         .connect(url)

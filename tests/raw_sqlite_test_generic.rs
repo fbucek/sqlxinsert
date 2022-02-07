@@ -48,7 +48,7 @@ async fn test_macro_sqlite_insert_generic() {
         car_name: "Skoda".to_string(),
     };
 
-    let url = "sqlite:%3Amemory:";
+    let url = "sqlite::memory:";
 
     let pool = sqlx::sqlite::SqlitePoolOptions::new()
         .connect_timeout(std::time::Duration::from_secs(30))

@@ -5,6 +5,7 @@ struct Car {
     pub car_name: String,
 }
 #[derive(Default, Debug, sqlx::FromRow)]
+#[allow(dead_code)]
 struct CreateCar {
     pub car_name: String,
 }
