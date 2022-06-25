@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.0 - 2022-06-25
+
+- Merged 0.4 and 0.5 ( forgot that there is new `insert_raw` method )
+
 ## 0.5.0 - 2022-06-25
 
 - Updated to `sqlx 6.x`
