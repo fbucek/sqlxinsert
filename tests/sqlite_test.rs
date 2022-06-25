@@ -8,7 +8,7 @@ struct Car {
     pub car_name: String,
 }
 
-#[tokio::test(threaded_scheduler)]
+#[tokio::test]
 async fn test_macro_sqlite_insert() {
     let car = Car {
         car_id: 33,

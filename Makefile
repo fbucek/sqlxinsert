@@ -19,6 +19,7 @@ check:
 	cargo check
 	cargo clippy
 	cargo fmt
+	cargo audit
 # Create documentaion
 doc:
 	cargo doc --no-deps --open

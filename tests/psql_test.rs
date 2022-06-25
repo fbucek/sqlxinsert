@@ -32,8 +32,8 @@ async fn test_macro_insert() {
     let url = "postgres://user:pass@localhost:5444/test_db";
 
     let pool = sqlx::postgres::PgPoolOptions::new()
-        .connect_timeout(std::time::Duration::from_secs(30))
-        .connect(&url)
+        .acquire_timeout(std::time::Duration::from_secs(30))
+        .connect(url)
         .await
         .expect("Not possible to create pool");
 

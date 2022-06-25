@@ -6,6 +6,7 @@ struct Car {
 }
 #[derive(Default, Debug, sqlx::FromRow)]
 struct CreateCar {
+    #[allow(dead_code)]
     pub car_name: String,
 }
 
@@ -14,7 +15,7 @@ impl Car {
         &self,
         pool: &sqlx::PgPool,
         table: &str,
-    ) -> eyre::Result<sqlx::postgres::PgDone> {
+    ) -> eyre::Result<sqlx::postgres::PgQueryResult> {
         let sql = self.insert_query(table);
         let res = sqlx::query(&sql).execute(pool).await.unwrap();
         Ok(res)
@@ -37,8 +38,8 @@ async fn test_macro_psql_insert() {
     let url = "postgres://user:pass@localhost:5444/test_db";
 
     let pool = sqlx::postgres::PgPoolOptions::new()
-        .connect_timeout(std::time::Duration::from_secs(30))
-        .connect(&url)
+        .acquire_timeout(std::time::Duration::from_secs(30))
+        .connect(url)
         .await
         .expect("Not possible to create pool");
 

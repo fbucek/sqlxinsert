@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.0 - 2022-06-25
+
+- Updated to `sqlx 6.x`
+
 ## 0.2.2 - 2020-11-14
 
 - chagned to `runtime-actix-rustls` from `tokio` because there is problem with sqlite under actix with tokio runtime.
@@ -7,7 +11,7 @@
 
 ## 0.2.1 - 2020-11-14
 
-- Updated reamde.md
+- Updated readme.md
 
 ## 0.2.0 - 2020-11-14
 
