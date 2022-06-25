@@ -1,44 +1,56 @@
 // #[derive(Default, Debug, sqlx::FromRow)]
 #[derive(Default, Debug, sqlx::FromRow)]
 struct Car {
-    pub car_id: i32,
-    pub car_name: String,
-}
-#[derive(Default, Debug, sqlx::FromRow)]
-#[allow(dead_code)]
-struct CreateCar {
-    #[allow(dead_code)]
+    pub id: i32,
     pub car_name: String,
 }
 
 impl Car {
-    pub async fn insert(
-        &self,
-        pool: &sqlx::PgPool,
-        table: &str,
-    ) -> eyre::Result<sqlx::postgres::PgQueryResult> {
+    pub async fn insert<T>(&self, pool: &sqlx::SqlitePool, table: &str) -> eyre::Result<T>
+    where
+        T: Send,
+        T: for<'c> sqlx::FromRow<'c, sqlx::sqlite::SqliteRow>,
+        T: std::marker::Unpin,
+    {
         let sql = self.insert_query(table);
-        let res = sqlx::query(&sql).execute(pool).await.unwrap();
+        // let res = sqlx::query(&sql).execute(pool).await?;
+        let res = sqlx::query(&sql).bind(&self.car_name).execute(pool).await?;
+
+        let sql = format!(
+            "select * from {} where id={}",
+            table,
+            res.last_insert_rowid()
+        );
+        let res: T = sqlx::query_as::<_, T>(&sql)
+            // .bind(&self.)
+            .fetch_one(pool)
+            .await?;
+
         Ok(res)
     }
     fn insert_query(&self, table: &str) -> String {
         format!(
-            "insert into {} ( car_id, car_name) values ( '{}', '{}' ) returning *",
-            table, self.car_id, self.car_name
+            "insert into {} ( id, car_name ) values ( '{}', '{}' )",
+            table, self.id, self.car_name
         )
     }
 }
 
 #[tokio::test]
-async fn test_macro_psql_insert() {
+async fn test_macro_sqlite_insert_generic() {
+    // let car = Car {
+    //     car_id: 33,
+    //     car_name: "Skoda".to_string(),
+    // };
+
     let car = Car {
-        car_id: 33,
+        id: 34,
         car_name: "Skoda".to_string(),
     };
 
-    let url = "postgres://user:pass@localhost:5444/test_db";
+    let url = "sqlite::memory:";
 
-    let pool = sqlx::postgres::PgPoolOptions::new()
+    let pool = sqlx::sqlite::SqlitePoolOptions::new()
         .acquire_timeout(std::time::Duration::from_secs(30))
         .connect(url)
         .await
@@ -49,7 +61,7 @@ async fn test_macro_psql_insert() {
     sqlx::query(drop_table).execute(&pool).await.unwrap();
 
     let create_table = "create table cars (
-        car_id INTEGER PRIMARY KEY,
+        id INTEGER PRIMARY KEY,
         car_name TEXT NOT NULL
     )";
 
@@ -58,7 +70,8 @@ async fn test_macro_psql_insert() {
         .await
         .expect("Not possible to cretae table");
 
-    car.insert(&pool, "cars")
+    let _car = car
+        .insert::<Car>(&pool, "cars")
         .await
         .expect("Not possible to insert into dabase");
 

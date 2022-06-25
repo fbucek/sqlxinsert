@@ -64,11 +64,11 @@ async fn test_macro_sqlite_insert_raw() {
     sqlx::query(create_table)
         .execute(&pool)
         .await
-        .expect("Not possible to cretae table");
+        .expect("Not possible to create table");
 
     car.insert(&pool, "cars")
         .await
-        .expect("Not possible to insert into dabase");
+        .expect("Not possible to insert into database");
 
     // let sql = car.insert_query("cars");
 

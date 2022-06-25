@@ -10,7 +10,7 @@ struct Car {
     pub name: String,
 }
 
-#[derive(Default, Debug, sqlx::FromRow, sqlxinsert::PqInsert)]
+#[derive(Default, Debug, sqlx::FromRow, sqlxinsert::PgInsert)]
 struct CreateCar {
     pub name: String,
     pub color: Option<String>,
