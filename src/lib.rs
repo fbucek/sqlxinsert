@@ -30,7 +30,7 @@ fn dollar_values(max: usize) -> String {
 ///     car_name: "Skoda".to_string(),
 /// };
 ///
-/// let url = "sqlite:%3Amemory:";
+/// let url = "sqlite::memory:";
 /// let pool = sqlx::sqlite::SqlitePoolOptions::new().connect(url).await.unwrap();
 ///
 /// let create_table = "create table cars ( car_id INTEGER PRIMARY KEY, car_name TEXT NOT NULL )";

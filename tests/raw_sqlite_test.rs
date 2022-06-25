@@ -41,7 +41,7 @@ async fn test_macro_sqlite_insert_raw() {
 
     //let mut conn = pool.acquire().await.unwrap();
 
-    let url = "sqlite:%3Amemory:";
+    let url = "sqlite::memory:";
 
     let pool = sqlx::sqlite::SqlitePoolOptions::new()
         .connect(url)
