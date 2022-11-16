@@ -219,25 +219,38 @@ pub fn derive_update_from_struct_psql(input: TokenStream) -> TokenStream {
 
     TokenStream::from(quote! {
         impl #struct_name {
-            pub fn update_query_string(&self, table: &str, where_field: &str) -> String
+            pub fn update_query_string(&self, table: &str, where_fields: Vec<&str>) -> String
             {
 
-                let fields_for_update = #columns.trim().split(",").map(|s|s.trim()).collect::<Vec<&str>>();
-                 let where_field_tuple = fields_for_update.iter().enumerate().find(|(i,&item)| item == where_field).expect("Where field does not exist as field on struc");
-                let where_clause = format!("WHERE {} = ${}", where_field_tuple.1, where_field_tuple.0 + 1);
 
-                let update_set_values = fields_for_update.iter().enumerate().filter(|(i,&item)| item !=where_field).map(|(i,item)| format!("{} = ${}", item, i + 1))
+                let fields_for_update = #columns.trim().split(",").map(|s|s.trim()).collect::<Vec<&str>>();
+                let where_field_matches = fields_for_update
+                .iter()
+                .enumerate()
+                .filter(|(i,item)| where_fields.contains(item))
+                .map(|(i, &item)| format!("{} = ${}", item, i + 1)).collect::<Vec<String>>().join(" AND ");
+
+                let where_clause = format!("WHERE {}", where_field_matches);
+
+                let update_set_values = fields_for_update.iter().enumerate().filter(|(i,item)| !where_fields.contains(item)).map(|(i,&item)| format!("{} = ${}", item, i + 1))
                     .collect::<Vec<String>>().join(",");
 
-                let sqlquery = format!("UPDATE {} SET {} {}  returning *", table, update_set_values, where_clause ); // self.value_list()); //self.values );
+                if where_fields.len() < 1 {
+                    panic!("There must be at least one field used for id")
+                }
+                if update_set_values.len() < 1 {
+                    panic!("There must be at least one field being updated")
+                }
+
+                let sqlquery = format!("UPDATE {} SET {} {} returning *", table, update_set_values, where_clause ); // self.value_list()); //self.values );
                 sqlquery
             }
 
-            pub async fn update<'e,E>(&self, executor: E, table: &str, where_field: &str) -> sqlx::Result<()>
+            pub async fn update<'e,E>(&self, executor: E, table: &str, where_fields: Vec<&str>) -> sqlx::Result<()>
             where
                 E: sqlx::Executor<'e,Database = sqlx::Postgres>
             {
-                let sql = self.update_query_string(table, where_field);
+                let sql = self.update_query_string(table, where_fields);
 
                 // let mut pool = pool;
                  sqlx::query(&sql)

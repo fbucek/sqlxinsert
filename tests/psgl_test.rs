@@ -83,8 +83,8 @@ async fn test_update_string() {
         id: 1,
         name: "Skoda".into(),
     };
-    let upd_str = car_skoda.update_query_string("cars", "id");
-    let expected_str = "UPDATE cars SET name = $2 WHERE id = $1  returning *";
+    let upd_str = car_skoda.update_query_string("cars", vec!["id"]);
+    let expected_str = "UPDATE cars SET name = $2 WHERE id = $1 returning *";
 
     assert_eq!(expected_str, upd_str)
 }
@@ -134,7 +134,7 @@ async fn test_macro_update() {
     };
 
     updated_car
-        .update(&pool, "cars", "id")
+        .update(&pool, "cars", vec!["id"])
         .await
         .expect("Not possible to update in db");
 
