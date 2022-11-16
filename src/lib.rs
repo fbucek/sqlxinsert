@@ -186,9 +186,83 @@ pub fn derive_from_struct_psql(input: TokenStream) -> TokenStream {
     })
 }
 
+#[proc_macro_derive(PgUpdate)]
+pub fn derive_update_from_struct_psql(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+
+    let fields = match &input.data {
+        Data::Struct(DataStruct {
+            fields: Fields::Named(fields),
+            ..
+        }) => &fields.named,
+        _ => panic!("expected a struct with named fields"),
+    };
+    let field_name = fields.iter().map(|field| &field.ident);
+    let field_name_values = fields.iter().map(|field| &field.ident);
+
+    let field_length = field_name.len();
+    // struct Car { id: i32, name: String }
+    // -> ( $1,$2 )
+
+    // struct Car ...
+    // -> Car
+    let struct_name = &input.ident;
+
+    // struct { id: i32, name: String }
+    // -> ( id, name )
+    let columns = format!(
+        "{}",
+        quote! {
+            #( #field_name ),*
+        }
+    );
+
+    TokenStream::from(quote! {
+        impl #struct_name {
+            pub fn update_query_string(&self, table: &str, where_field: &str) -> String
+            {
+
+                let fields_for_update = #columns.trim().split(", ").collect::<Vec<&str>>();
+                 let where_field_tuple = fields_for_update.iter().enumerate().find(|(i,&item)| item == where_field).expect("Where field does not exist as field on struc");
+                let where_clause = format!("WHERE {} = ${}", where_field_tuple.1, where_field_tuple.0 + 1);
+
+                let update_set_values = fields_for_update.iter().enumerate().filter(|(i,&item)| item !=where_field).map(|(i,item)| format!("{} = ${}", item, i + 1))
+                    .collect::<Vec<String>>().join(",");
+
+                let sqlquery = format!("UPDATE {} SET {} {}  returning *", table, update_set_values, where_clause ); // self.value_list()); //self.values );
+                sqlquery
+            }
+
+            pub async fn update<'e,E>(&self, executor: E, table: &str, where_field: &str) -> sqlx::Result<()>
+            where
+                E: sqlx::Executor<'e,Database = sqlx::Postgres>
+            {
+                let sql = self.update_query_string(table, where_field);
+
+                // let mut pool = pool;
+                 sqlx::query(&sql)
+                #(
+                    .bind(&self.#field_name_values)//         let #field_name: #field_type = Default::default();
+                )*
+                    .execute(executor)
+                    .await?;
+
+                Ok(())
+            }
+
+        }
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[derive(Default, Debug, std::cmp::PartialEq, sqlx::FromRow)]
+    struct Car {
+        pub id: i32,
+        pub name: String,
+    }
 
     #[test]
     fn range_test() {
