@@ -50,17 +50,17 @@ async fn test_macro_insert() {
     sqlx::query(create_table).execute(&pool).await.unwrap();
 
     // Fill data
-    let car_skoda_res = car_skoda
-        .insert::<Car>(&pool, "cars")
+    car_skoda
+        .insert(&pool, "cars")
         .await
         .expect("Not possible to insert into dabase");
-    assert_eq!(car_skoda_res.name, car_skoda.name);
+    // assert_eq!(car_skoda_res.name, car_skoda.name);
 
-    let car_tesla_res = car_tesla
-        .insert::<Car>(&pool, "cars")
+    car_tesla
+        .insert(&pool, "cars")
         .await
         .expect("Not possible to insert into dabase");
-    assert_eq!(car_tesla_res.name, car_tesla.name);
+    // assert_eq!(car_tesla_res.name, car_tesla.name);
 
     let cars = sqlx::query_as::<_, Car>("SELECT * FROM cars")
         .fetch_all(&pool)

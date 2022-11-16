@@ -18,7 +18,7 @@ fn dollar_values(max: usize) -> String {
 ///
 /// ```rust
 /// # #[tokio::main]
-/// # async fn main() -> eyre::Result<()>{
+/// # async fn main() -> sqlx::Result<()>{
 /// #[derive(Default, Debug, sqlx::FromRow, sqlxinsert::SqliteInsert)]
 /// struct Car {
 ///     pub car_id: i32,
@@ -77,7 +77,7 @@ pub fn derive_from_struct_sqlite(input: TokenStream) -> TokenStream {
                 sqlquery
             }
 
-            pub async fn insert_raw(&self, pool: &sqlx::SqlitePool, table: &str) -> eyre::Result<sqlx::sqlite::SqliteQueryResult>
+            pub async fn insert_raw(&self, pool: &sqlx::SqlitePool, table: &str) -> sqlx::Result<sqlx::sqlite::SqliteQueryResult>
             {
                 let sql = self.insert_query(table);
                 Ok(sqlx::query(&sql)
@@ -96,7 +96,7 @@ pub fn derive_from_struct_sqlite(input: TokenStream) -> TokenStream {
 ///
 /// ```rust,ignore
 /// # #[tokio::main]
-/// # async fn main() -> eyre::Result<()>{
+/// # async fn main() -> sqlx::Result<()>{
 ///
 /// #[derive(Default, Debug, std::cmp::PartialEq, sqlx::FromRow)]
 /// struct Car {
@@ -166,23 +166,21 @@ pub fn derive_from_struct_psql(input: TokenStream) -> TokenStream {
                 sqlquery
             }
 
-            pub async fn insert<T>(&self, pool: &sqlx::PgPool, table: &str) -> eyre::Result<T>
+            pub async fn insert<'e,E>(&self, executor: E, table: &str) -> sqlx::Result<()>
             where
-                T: Send,
-                T: for<'c> sqlx::FromRow<'c, sqlx::postgres::PgRow>,
-                T: std::marker::Unpin
+                E: sqlx::Executor<'e,Database = sqlx::Postgres>
             {
                 let sql = self.insert_query(table);
 
                 // let mut pool = pool;
-                let res: T = sqlx::query_as::<_,T>(&sql)
+                 sqlx::query(&sql)
                 #(
                     .bind(&self.#field_name_values)//         let #field_name: #field_type = Default::default();
                 )*
-                    .fetch_one(pool)
+                    .execute(executor)
                     .await?;
 
-                Ok(res)
+                Ok(())
             }
         }
     })
