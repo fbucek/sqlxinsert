@@ -222,7 +222,7 @@ pub fn derive_update_from_struct_psql(input: TokenStream) -> TokenStream {
             pub fn update_query_string(&self, table: &str, where_field: &str) -> String
             {
 
-                let fields_for_update = #columns.trim().split(", ").collect::<Vec<&str>>();
+                let fields_for_update = #columns.trim().split(",").map(|s|s.trim()).collect::<Vec<&str>>();
                  let where_field_tuple = fields_for_update.iter().enumerate().find(|(i,&item)| item == where_field).expect("Where field does not exist as field on struc");
                 let where_clause = format!("WHERE {} = ${}", where_field_tuple.1, where_field_tuple.0 + 1);
 
