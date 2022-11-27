@@ -14,7 +14,7 @@ impl Car {
         &self,
         pool: &sqlx::SqlitePool,
         table: &str,
-    ) -> eyre::Result<sqlx::sqlite::SqliteQueryResult> {
+    ) -> sqlx::Result<sqlx::sqlite::SqliteQueryResult> {
         let sql = self.insert_query(table);
         let res = sqlx::query(&sql).execute(pool).await?;
         Ok(res)
