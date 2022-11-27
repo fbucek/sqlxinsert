@@ -18,7 +18,7 @@ fn dollar_values(max: usize) -> String {
 ///
 /// ```rust
 /// # #[tokio::main]
-/// # async fn main() -> eyre::Result<()>{
+/// # async fn main() -> sqlx::Result<()>{
 /// #[derive(Default, Debug, sqlx::FromRow, sqlxinsert::SqliteInsert)]
 /// struct Car {
 ///     pub car_id: i32,
@@ -77,7 +77,7 @@ pub fn derive_from_struct_sqlite(input: TokenStream) -> TokenStream {
                 sqlquery
             }
 
-            pub async fn insert_raw(&self, pool: &sqlx::SqlitePool, table: &str) -> eyre::Result<sqlx::sqlite::SqliteQueryResult>
+            pub async fn insert_raw(&self, pool: &sqlx::SqlitePool, table: &str) -> sqlx::Result<sqlx::sqlite::SqliteQueryResult>
             {
                 let sql = self.insert_query(table);
                 Ok(sqlx::query(&sql)
@@ -96,7 +96,7 @@ pub fn derive_from_struct_sqlite(input: TokenStream) -> TokenStream {
 ///
 /// ```rust,ignore
 /// # #[tokio::main]
-/// # async fn main() -> eyre::Result<()>{
+/// # async fn main() -> sqlx::Result<()>{
 ///
 /// #[derive(Default, Debug, std::cmp::PartialEq, sqlx::FromRow)]
 /// struct Car {
@@ -166,24 +166,103 @@ pub fn derive_from_struct_psql(input: TokenStream) -> TokenStream {
                 sqlquery
             }
 
-            pub async fn insert<T>(&self, pool: &sqlx::PgPool, table: &str) -> eyre::Result<T>
+            pub async fn insert<'e,E>(&self, executor: E, table: &str) -> sqlx::Result<()>
             where
-                T: Send,
-                T: for<'c> sqlx::FromRow<'c, sqlx::postgres::PgRow>,
-                T: std::marker::Unpin
+                E: sqlx::Executor<'e,Database = sqlx::Postgres>
             {
                 let sql = self.insert_query(table);
 
                 // let mut pool = pool;
-                let res: T = sqlx::query_as::<_,T>(&sql)
+                 sqlx::query(&sql)
                 #(
                     .bind(&self.#field_name_values)//         let #field_name: #field_type = Default::default();
                 )*
-                    .fetch_one(pool)
+                    .execute(executor)
                     .await?;
 
-                Ok(res)
+                Ok(())
             }
+        }
+    })
+}
+
+#[proc_macro_derive(PgUpdate)]
+pub fn derive_update_from_struct_psql(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+
+    let fields = match &input.data {
+        Data::Struct(DataStruct {
+            fields: Fields::Named(fields),
+            ..
+        }) => &fields.named,
+        _ => panic!("expected a struct with named fields"),
+    };
+    let field_name = fields.iter().map(|field| &field.ident);
+    let field_name_values = fields.iter().map(|field| &field.ident);
+
+    let field_length = field_name.len();
+    // struct Car { id: i32, name: String }
+    // -> ( $1,$2 )
+
+    // struct Car ...
+    // -> Car
+    let struct_name = &input.ident;
+
+    // struct { id: i32, name: String }
+    // -> ( id, name )
+    let columns = format!(
+        "{}",
+        quote! {
+            #( #field_name ),*
+        }
+    );
+
+    TokenStream::from(quote! {
+        impl #struct_name {
+            pub fn update_query_string(&self, table: &str, where_fields: Vec<&str>) -> String
+            {
+
+
+                let fields_for_update = #columns.trim().split(",").map(|s|s.trim()).collect::<Vec<&str>>();
+                let where_field_matches = fields_for_update
+                .iter()
+                .enumerate()
+                .filter(|(i,item)| where_fields.contains(item))
+                .map(|(i, &item)| format!("{} = ${}", item, i + 1)).collect::<Vec<String>>().join(" AND ");
+
+                let where_clause = format!("WHERE {}", where_field_matches);
+
+                let update_set_values = fields_for_update.iter().enumerate().filter(|(i,item)| !where_fields.contains(item)).map(|(i,&item)| format!("{} = ${}", item, i + 1))
+                    .collect::<Vec<String>>().join(",");
+
+                if where_fields.len() < 1 {
+                    panic!("There must be at least one field used for id")
+                }
+                if update_set_values.len() < 1 {
+                    panic!("There must be at least one field being updated")
+                }
+
+                let sqlquery = format!("UPDATE {} SET {} {} returning *", table, update_set_values, where_clause ); // self.value_list()); //self.values );
+                sqlquery
+            }
+
+            pub async fn update<'e,E>(&self, executor: E, table: &str, where_fields: Vec<&str>) -> sqlx::Result<()>
+            where
+                E: sqlx::Executor<'e,Database = sqlx::Postgres>
+            {
+                let sql = self.update_query_string(table, where_fields);
+
+                // let mut pool = pool;
+                 sqlx::query(&sql)
+                #(
+                    .bind(&self.#field_name_values)//         let #field_name: #field_type = Default::default();
+                )*
+                    .execute(executor)
+                    .await?;
+
+                Ok(())
+            }
+
         }
     })
 }
@@ -191,6 +270,12 @@ pub fn derive_from_struct_psql(input: TokenStream) -> TokenStream {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[derive(Default, Debug, std::cmp::PartialEq, sqlx::FromRow)]
+    struct Car {
+        pub id: i32,
+        pub name: String,
+    }
 
     #[test]
     fn range_test() {
