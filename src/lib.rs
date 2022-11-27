@@ -80,13 +80,12 @@ pub fn derive_from_struct_sqlite(input: TokenStream) -> TokenStream {
             pub async fn insert_raw(&self, pool: &sqlx::SqlitePool, table: &str) -> sqlx::Result<sqlx::sqlite::SqliteQueryResult>
             {
                 let sql = self.insert_query(table);
-                Ok(sqlx::query(&sql)
+                sqlx::query(&sql)
                 #(
                     .bind(&self.#field_name2)//         let #field_name: #field_type = Default::default();
                 )*
                     .execute(pool)// (&mut conn)
-                    .await?
-                )
+                    .await
             }
         }
     })
@@ -121,7 +120,9 @@ pub fn derive_from_struct_sqlite(input: TokenStream) -> TokenStream {
 /// let pool = sqlx::postgres::PgPoolOptions::new().connect(&url).await.unwrap();
 ///
 /// let car_skoda = CreateCar::new("Skoda");
-/// let res: Car = car_skoda.insert::<Car>(pool, "cars").await?;
+/// let res: Car = car_skoda.insert_get::<Car>(pool, "cars").await?;
+/// // Insret without return
+/// car_skoda.insert(pool, "cars").await?;
 /// # Ok(())
 /// # }
 /// ```
@@ -139,6 +140,7 @@ pub fn derive_from_struct_psql(input: TokenStream) -> TokenStream {
     };
     let field_name = fields.iter().map(|field| &field.ident);
     let field_name_values = fields.iter().map(|field| &field.ident);
+    let field_name_values2 = fields.iter().map(|field| &field.ident);
 
     let field_length = field_name.len();
     // struct Car { id: i32, name: String }
@@ -173,7 +175,7 @@ pub fn derive_from_struct_psql(input: TokenStream) -> TokenStream {
                 let sql = self.insert_query(table);
 
                 // let mut pool = pool;
-                 sqlx::query(&sql)
+                sqlx::query(&sql)
                 #(
                     .bind(&self.#field_name_values)//         let #field_name: #field_type = Default::default();
                 )*
@@ -181,6 +183,25 @@ pub fn derive_from_struct_psql(input: TokenStream) -> TokenStream {
                     .await?;
 
                 Ok(())
+            }
+
+            pub async fn insert_get<T>(&self, pool: &sqlx::PgPool, table: &str) -> sqlx::Result<T>
+            where
+                T: Send,
+                T: for<'c> sqlx::FromRow<'c, sqlx::postgres::PgRow>,
+                T: std::marker::Unpin
+            {
+                let sql = self.insert_query(table);
+
+                // let mut pool = pool;
+                let res: T = sqlx::query_as::<_,T>(&sql)
+                #(
+                    .bind(&self.#field_name_values2)//         let #field_name: #field_type = Default::default();
+                )*
+                    .fetch_one(pool)
+                    .await?;
+
+                Ok(res)
             }
         }
     })
@@ -200,7 +221,7 @@ pub fn derive_update_from_struct_psql(input: TokenStream) -> TokenStream {
     let field_name = fields.iter().map(|field| &field.ident);
     let field_name_values = fields.iter().map(|field| &field.ident);
 
-    let field_length = field_name.len();
+    // let field_length = field_name.len();
     // struct Car { id: i32, name: String }
     // -> ( $1,$2 )
 
@@ -221,8 +242,6 @@ pub fn derive_update_from_struct_psql(input: TokenStream) -> TokenStream {
         impl #struct_name {
             pub fn update_query_string(&self, table: &str, where_fields: Vec<&str>) -> String
             {
-
-
                 let fields_for_update = #columns.trim().split(",").map(|s|s.trim()).collect::<Vec<&str>>();
                 let where_field_matches = fields_for_update
                 .iter()
@@ -253,7 +272,7 @@ pub fn derive_update_from_struct_psql(input: TokenStream) -> TokenStream {
                 let sql = self.update_query_string(table, where_fields);
 
                 // let mut pool = pool;
-                 sqlx::query(&sql)
+                sqlx::query(&sql)
                 #(
                     .bind(&self.#field_name_values)//         let #field_name: #field_type = Default::default();
                 )*
