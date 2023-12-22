@@ -42,9 +42,8 @@ async fn test_macro_sqlite_insert() {
         .expect("Not possible to fetch");
 
     assert_eq!(rows.len(), 1);
-    assert_eq!(rows[0].car_name, "Skoda");    
+    assert_eq!(rows[0].car_name, "Skoda");
 }
-
 
 #[tokio::test]
 async fn test_macro_sqlite_update() {
@@ -81,13 +80,15 @@ async fn test_macro_sqlite_update() {
 
     assert_eq!(rows.len(), 1);
     assert_eq!(rows[0].car_name, "Skoda");
-    
-    
+
     let mut audi = car.clone();
     audi.car_name = "Audi".to_string();
-    
+
+    let sql = audi.update_query("cars");
+    assert_eq!(sql, "update cars set car_name = $2 where id = $1");
+
     let _ = audi.update_raw(&pool, "cars").await.unwrap();
-    
+
     let rows = sqlx::query_as::<_, Car>("SELECT * FROM cars")
         .fetch_all(&pool)
         .await
@@ -95,5 +96,4 @@ async fn test_macro_sqlite_update() {
 
     assert_eq!(rows.len(), 1);
     assert_eq!(rows[0].car_name, "Audi");
-    
 }

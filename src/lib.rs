@@ -1,3 +1,6 @@
+// lib.rs
+mod common;
+
 extern crate proc_macro;
 use self::proc_macro::TokenStream;
 
@@ -5,14 +8,7 @@ use quote::quote;
 
 use syn::{parse_macro_input, Data, DataStruct, DeriveInput, Fields};
 
-/// 2 -> ( $1,$2 )
-fn dollar_values(max: usize) -> String {
-    let itr = 1..max + 1;
-    itr.into_iter()
-        .map(|s| format!("${}", s))
-        .collect::<Vec<String>>()
-        .join(",")
-}
+use crate::common::dollar_values;
 
 /// Create method for inserting struts into Sqlite database
 ///
@@ -56,37 +52,43 @@ pub fn derive_from_struct_sqlite(input: TokenStream) -> TokenStream {
     let struct_name = &input.ident;
 
     // INSERT Attributes -> field names
-    let field_name = fields.iter().map(|field| &field.ident);
-    let field_name_values = fields.iter().map(|field| &field.ident);
+    let attributes = fields.iter().map(|field| &field.ident);
+    let attributes_vec: Vec<String> = fields
+        .iter()
+        .map(|field| {
+            field
+                .ident
+                .as_ref()
+                .map(ToString::to_string)
+                .unwrap_or_default()
+        })
+        .collect();
 
-    let field_length = field_name.len();
-    // ( $1, $2)
-    let values = dollar_values(field_length);
     // ( id, name, hostname .. )
-    let fields_list = quote! {
-        #( #field_name ),*
-    };
+    let columns = attributes_vec.join(",");
+    // ( $1, $2)
+    let dollars = dollar_values(attributes_vec.len());
 
-
-
-
-    // UPDATE Attributes -> field names for 
-    let field_name_update = fields.iter().map(|field| &field.ident);
-    let field_name_values2 = fields.iter().map(|field| &field.ident);
-    let values_update = dollar_values(field_length - 1);
-
-    let fields_list2 = quote! {
-        #( #field_name_update ),*
-    };
-    let columns = format!("{}", fields_list);
-    let columns2 = format!("{}", fields_list2);
+    // UPDATE Attributes -> field names for
+    let attributes_update = fields.iter().map(|field| &field.ident);
+    // name = $2, hostname = $3
+    let pairs: String = attributes_vec
+        .iter()
+        .enumerate()
+        .skip(1) // Skip the first element
+        .map(|(index, value)| {
+            let number = index + 1; // Start with $2
+            format!("{} = ${}", value, number)
+        })
+        .collect::<Vec<String>>()
+        .join(",");
 
     TokenStream::from(quote! {
 
         impl #struct_name {
             pub fn insert_query(&self, table: &str) -> String
             {
-                let sqlquery = format!("insert into {} ( {} ) values ( {} )", table, #columns, #values); //self.values );
+                let sqlquery = format!("insert into {} ( {} ) values ( {} )", table, #columns, #dollars); //self.values );
                 sqlquery
             }
 
@@ -95,7 +97,7 @@ pub fn derive_from_struct_sqlite(input: TokenStream) -> TokenStream {
                 let sql = self.insert_query(table);
                 Ok(sqlx::query(&sql)
                 #(
-                    .bind(&self.#field_name_values)//         let #field_name: #field_type = Default::default();
+                    .bind(&self.#attributes)//         let #field_name: #field_type = Default::default();
                 )*
                     .execute(pool)// (&mut conn)
                     .await?
@@ -104,16 +106,16 @@ pub fn derive_from_struct_sqlite(input: TokenStream) -> TokenStream {
 
             pub fn update_query(&self, table: &str) -> String
             {
-                let sqlquery = format!("update {} set {} where id = ${} returning *", table, #columns2, #values_update);
+                let sqlquery = format!("update {} set {} where id = $1", table, #pairs );
                 sqlquery
             }
 
             pub async fn update_raw(&self, pool: &sqlx::SqlitePool, table: &str) -> eyre::Result<sqlx::sqlite::SqliteQueryResult>
             {
-                let sql = self.insert_query(table);
+                let sql = self.update_query(table);
                 Ok(sqlx::query(&sql)
                 #(
-                    .bind(&self.#field_name_values2)//         let #field_name: #field_type = Default::default();
+                    .bind(&self.#attributes_update)//         let #field_name: #field_type = Default::default();
                 )*
                     .execute(pool)// (&mut conn)
                     .await?
@@ -250,27 +252,4 @@ pub fn derive_from_struct_psql(input: TokenStream) -> TokenStream {
             }
         }
     })
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn range_test() {
-        let itr = 1..4;
-        let res = itr
-            .into_iter()
-            .map(|s| format!("${}", s))
-            .collect::<Vec<String>>()
-            .join(",");
-
-        assert_eq!(res, "$1,$2,$3");
-    }
-
-    #[test]
-    fn dollar_value_tes() {
-        let res = dollar_values(3);
-        assert_eq!(res, "$1,$2,$3");
-    }
 }
