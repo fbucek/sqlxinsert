@@ -52,21 +52,34 @@ pub fn derive_from_struct_sqlite(input: TokenStream) -> TokenStream {
         }) => &fields.named,
         _ => panic!("expected a struct with named fields"),
     };
-
-    // Attributes -> field names
-    let field_name = fields.iter().map(|field| &field.ident);
-    let field_name2 = fields.iter().map(|field| &field.ident);
-
+    // COMMON Atrributes
     let struct_name = &input.ident;
+
+    // INSERT Attributes -> field names
+    let field_name = fields.iter().map(|field| &field.ident);
+    let field_name_values = fields.iter().map(|field| &field.ident);
 
     let field_length = field_name.len();
     // ( $1, $2)
     let values = dollar_values(field_length);
-
+    // ( id, name, hostname .. )
     let fields_list = quote! {
         #( #field_name ),*
     };
+
+
+
+
+    // UPDATE Attributes -> field names for 
+    let field_name_update = fields.iter().map(|field| &field.ident);
+    let field_name_values2 = fields.iter().map(|field| &field.ident);
+    let values_update = dollar_values(field_length - 1);
+
+    let fields_list2 = quote! {
+        #( #field_name_update ),*
+    };
     let columns = format!("{}", fields_list);
+    let columns2 = format!("{}", fields_list2);
 
     TokenStream::from(quote! {
 
@@ -82,7 +95,25 @@ pub fn derive_from_struct_sqlite(input: TokenStream) -> TokenStream {
                 let sql = self.insert_query(table);
                 Ok(sqlx::query(&sql)
                 #(
-                    .bind(&self.#field_name2)//         let #field_name: #field_type = Default::default();
+                    .bind(&self.#field_name_values)//         let #field_name: #field_type = Default::default();
+                )*
+                    .execute(pool)// (&mut conn)
+                    .await?
+                )
+            }
+
+            pub fn update_query(&self, table: &str) -> String
+            {
+                let sqlquery = format!("update {} set {} where id = ${} returning *", table, #columns2, #values_update);
+                sqlquery
+            }
+
+            pub async fn update_raw(&self, pool: &sqlx::SqlitePool, table: &str) -> eyre::Result<sqlx::sqlite::SqliteQueryResult>
+            {
+                let sql = self.insert_query(table);
+                Ok(sqlx::query(&sql)
+                #(
+                    .bind(&self.#field_name_values2)//         let #field_name: #field_type = Default::default();
                 )*
                     .execute(pool)// (&mut conn)
                     .await?
@@ -138,7 +169,9 @@ pub fn derive_from_struct_psql(input: TokenStream) -> TokenStream {
         _ => panic!("expected a struct with named fields"),
     };
     let field_name = fields.iter().map(|field| &field.ident);
+    let field_name2 = fields.iter().map(|field| &field.ident);
     let field_name_values = fields.iter().map(|field| &field.ident);
+    let field_name_values2 = fields.iter().map(|field| &field.ident);
 
     let field_length = field_name.len();
     // struct Car { id: i32, name: String }
@@ -155,6 +188,12 @@ pub fn derive_from_struct_psql(input: TokenStream) -> TokenStream {
         "{}",
         quote! {
             #( #field_name ),*
+        }
+    );
+    let columns2 = format!(
+        "{}",
+        quote! {
+            #( #field_name2 ),*
         }
     );
 
@@ -177,7 +216,32 @@ pub fn derive_from_struct_psql(input: TokenStream) -> TokenStream {
                 // let mut pool = pool;
                 let res: T = sqlx::query_as::<_,T>(&sql)
                 #(
-                    .bind(&self.#field_name_values)//         let #field_name: #field_type = Default::default();
+                    .bind(&self.#field_name_values) //         let #field_name: #field_type = Default::default();
+                )*
+                    .fetch_one(pool)
+                    .await?;
+
+                Ok(res)
+            }
+
+            fn update_query(&self, table: &str) -> String
+            {
+                let sqlquery = format!("update {} set {} where id = ${} returning *", table, #columns2, #values);
+                sqlquery
+            }
+
+            pub async fn update<T>(&self, pool: &sqlx::PgPool, table: &str) -> eyre::Result<T>
+            where
+                T: Send,
+                T: for<'c> sqlx::FromRow<'c, sqlx::postgres::PgRow>,
+                T: std::marker::Unpin
+            {
+                let sql = self.insert_query(table);
+
+                // let mut pool = pool;
+                let res: T = sqlx::query_as::<_,T>(&sql)
+                #(
+                    .bind(&self.#field_name_values2)//         let #field_name: #field_type = Default::default();
                 )*
                     .fetch_one(pool)
                     .await?;

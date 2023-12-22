@@ -1,5 +1,13 @@
 # Changelog
 
+## UNRELEASED
+
+- [working] Adding `udpate` method
+
+## 0.7.0 - 2023-05-07
+
+- Updated to `sqlx 0.7`
+
 ## 0.6.0 - 2022-06-25
 
 - Merged 0.4 and 0.5 ( forgot that there is new `insert_raw` method )
