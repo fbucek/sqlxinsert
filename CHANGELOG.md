@@ -1,8 +1,9 @@
 # Changelog
 
-## UNRELEASED
+## 0.8.0 - 2023-12-22
 
-- [working] Adding `udpate` method
+- Added `udpate` method
+  - method expect update is based on first attribue ( usually id )
 
 ## 0.7.0 - 2023-05-07
 
