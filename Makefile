@@ -1,11 +1,12 @@
 .PHONY: testall doc initdocker rmdocker test
 
-all: check initdocker test rmdocker doc
-testall: initdocker test rmdocker
+all: check rmdocker initdocker test rmdocker doc
+testall: rmdocker initdocker test rmdocker
 
 # Docker used only for testing postgres database
 initdocker:
 	docker-compose up -d
+	sleep 1
 rmdocker:
 	docker stop sqlxinsert-db-test
 	docker rm sqlxinsert-db-test
