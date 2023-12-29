@@ -1,3 +1,4 @@
+#![cfg(feature = "sqlite")]
 // extern crate we're testing, same as any other code will do.
 //extern crate gmacro;
 

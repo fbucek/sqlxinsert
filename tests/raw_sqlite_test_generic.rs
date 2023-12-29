@@ -1,3 +1,4 @@
+#![cfg(feature = "sqlite")]
 // #[derive(Default, Debug, sqlx::FromRow)]
 #[derive(Default, Debug, sqlx::FromRow)]
 struct Car {
