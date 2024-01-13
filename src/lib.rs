@@ -37,6 +37,7 @@ use crate::common::dollar_values;
 /// # }
 /// ```
 ///
+#[cfg(feature = "sqlite")]
 #[proc_macro_derive(SqliteInsert)]
 pub fn derive_from_struct_sqlite(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -159,6 +160,7 @@ pub fn derive_from_struct_sqlite(input: TokenStream) -> TokenStream {
 /// # }
 /// ```
 ///
+#[cfg(feature = "postgres")]
 #[proc_macro_derive(PgInsert)]
 pub fn derive_from_struct_psql(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);

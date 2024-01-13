@@ -1,3 +1,4 @@
+#![cfg(feature = "postgres")]
 // #[derive(Default, Debug, sqlx::FromRow)]
 #[derive(Default, Debug, sqlx::FromRow)]
 struct Car {
