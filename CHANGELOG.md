@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.0 - 2024-01-13 
+
+- `sqlite` and `postgres` features PR: `9glenda`[#10](https://github.com/taiki-e/sqlxinsert/pull/10)
+- removed `eyre` dependency and using `sqlx::Result` instead.
+
+
 ## 0.8.0 - 2023-12-22
 
 - Added `udpate` method
