@@ -6,7 +6,7 @@ struct Car {
 }
 
 impl Car {
-    pub async fn insert<T>(&self, pool: &sqlx::SqlitePool, table: &str) -> eyre::Result<T>
+    pub async fn insert<T>(&self, pool: &sqlx::SqlitePool, table: &str) -> sqlx::Result<T>
     where
         T: Send,
         T: for<'c> sqlx::FromRow<'c, sqlx::sqlite::SqliteRow>,

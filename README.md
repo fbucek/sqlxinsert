@@ -54,7 +54,7 @@ impl CreateCar {
 }
 
 #[tokio::main]
-async fn main() -> eyre::Result<()>{
+async fn main() -> sqlx::Result<()>{
     let url = "postgres://user:pass@localhost:5432/test_db";
     let pool = sqlx::postgres::PgPoolOptions::new().connect(&url).await.unwrap();
     let car_skoda = CreateCar::new("Skoda");

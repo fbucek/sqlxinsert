@@ -14,7 +14,7 @@ use crate::common::dollar_values;
 ///
 /// ```rust
 /// # #[tokio::main]
-/// # async fn main() -> eyre::Result<()>{
+/// # async fn main() -> sqlx::Result<()>{
 /// #[derive(Default, Debug, sqlx::FromRow, sqlxinsert::SqliteInsert)]
 /// struct Car {
 ///     pub car_id: i32,
@@ -88,36 +88,34 @@ pub fn derive_from_struct_sqlite(input: TokenStream) -> TokenStream {
         impl #struct_name {
             pub fn insert_query(&self, table: &str) -> String
             {
-                let sqlquery = format!("insert into {} ( {} ) values ( {} )", table, #columns, #dollars); //self.values );
+                let sqlquery = format!("insert into {} ( {} ) values ( {} )", table, #columns, #dollars);
                 sqlquery
             }
 
-            pub async fn insert_raw(&self, pool: &sqlx::SqlitePool, table: &str) -> eyre::Result<sqlx::sqlite::SqliteQueryResult>
-            {
+            pub async fn insert_raw(&self, pool: &sqlx::SqlitePool, table: &str) -> Result<sqlx::sqlite::SqliteQueryResult, sqlx::Error> {
                 let sql = self.insert_query(table);
                 Ok(sqlx::query(&sql)
-                #(
-                    .bind(&self.#attributes)//         let #field_name: #field_type = Default::default();
-                )*
-                    .execute(pool)// (&mut conn)
+                    #(
+                        .bind(&self.#attributes)
+                    )*
+                    .execute(pool)
                     .await?
                 )
             }
 
             pub fn update_query(&self, table: &str) -> String
             {
-                let sqlquery = format!("update {} set {} where id = $1", table, #pairs );
+                let sqlquery = format!("update {} set {} where id = $1", table, #pairs);
                 sqlquery
             }
 
-            pub async fn update_raw(&self, pool: &sqlx::SqlitePool, table: &str) -> eyre::Result<sqlx::sqlite::SqliteQueryResult>
-            {
+            pub async fn update_raw(&self, pool: &sqlx::SqlitePool, table: &str) -> Result<sqlx::sqlite::SqliteQueryResult, sqlx::Error> {
                 let sql = self.update_query(table);
                 Ok(sqlx::query(&sql)
-                #(
-                    .bind(&self.#attributes_update)//         let #field_name: #field_type = Default::default();
-                )*
-                    .execute(pool)// (&mut conn)
+                    #(
+                        .bind(&self.#attributes_update)
+                    )*
+                    .execute(pool)
                     .await?
                 )
             }
@@ -129,7 +127,7 @@ pub fn derive_from_struct_sqlite(input: TokenStream) -> TokenStream {
 ///
 /// ```rust,ignore
 /// # #[tokio::main]
-/// # async fn main() -> eyre::Result<()>{
+/// # async fn main() -> sqlx::Result<()> {
 ///
 /// #[derive(Default, Debug, std::cmp::PartialEq, sqlx::FromRow)]
 /// struct Car {
@@ -213,7 +211,7 @@ pub fn derive_from_struct_psql(input: TokenStream) -> TokenStream {
                 sqlquery
             }
 
-            pub async fn insert<T>(&self, pool: &sqlx::PgPool, table: &str) -> eyre::Result<T>
+            pub async fn insert<T>(&self, pool: &sqlx::PgPool, table: &str) -> sqlx::Result<T>
             where
                 T: Send,
                 T: for<'c> sqlx::FromRow<'c, sqlx::postgres::PgRow>,
@@ -238,7 +236,7 @@ pub fn derive_from_struct_psql(input: TokenStream) -> TokenStream {
                 sqlquery
             }
 
-            pub async fn update<T>(&self, pool: &sqlx::PgPool, table: &str) -> eyre::Result<T>
+            pub async fn update<T>(&self, pool: &sqlx::PgPool, table: &str) -> sqlx::Result<T>
             where
                 T: Send,
                 T: for<'c> sqlx::FromRow<'c, sqlx::postgres::PgRow>,

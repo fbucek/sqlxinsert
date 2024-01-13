@@ -16,7 +16,7 @@ impl Car {
         &self,
         pool: &sqlx::PgPool,
         table: &str,
-    ) -> eyre::Result<sqlx::postgres::PgQueryResult> {
+    ) -> sqlx::Result<sqlx::postgres::PgQueryResult> {
         let sql = self.insert_query(table);
         let res = sqlx::query(&sql).execute(pool).await.unwrap();
         Ok(res)
