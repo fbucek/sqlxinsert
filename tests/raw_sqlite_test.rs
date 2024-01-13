@@ -1,3 +1,5 @@
+#![cfg(feature = "sqlite")]
+
 #[derive(Default, Debug, sqlx::FromRow)]
 struct Car {
     pub car_id: i32,
