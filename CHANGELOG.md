@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.1 - 2024-01-15
+
+- removed `useless question mark` in `SqliteInsert` macro
+
 ## 0.9.0 - 2024-01-13 
 
 - `sqlite` and `postgres` features PR: `9glenda`[#10](https://github.com/taiki-e/sqlxinsert/pull/10)

@@ -95,13 +95,12 @@ pub fn derive_from_struct_sqlite(input: TokenStream) -> TokenStream {
 
             pub async fn insert_raw(&self, pool: &sqlx::SqlitePool, table: &str) -> Result<sqlx::sqlite::SqliteQueryResult, sqlx::Error> {
                 let sql = self.insert_query(table);
-                Ok(sqlx::query(&sql)
+                sqlx::query(&sql)
                     #(
                         .bind(&self.#attributes)
                     )*
                     .execute(pool)
-                    .await?
-                )
+                    .await
             }
 
             pub fn update_query(&self, table: &str) -> String
@@ -112,13 +111,12 @@ pub fn derive_from_struct_sqlite(input: TokenStream) -> TokenStream {
 
             pub async fn update_raw(&self, pool: &sqlx::SqlitePool, table: &str) -> Result<sqlx::sqlite::SqliteQueryResult, sqlx::Error> {
                 let sql = self.update_query(table);
-                Ok(sqlx::query(&sql)
+                sqlx::query(&sql)
                     #(
                         .bind(&self.#attributes_update)
                     )*
                     .execute(pool)
-                    .await?
-                )
+                    .await
             }
         }
     })
