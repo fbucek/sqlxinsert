@@ -173,6 +173,7 @@ pub fn derive_from_struct_psql(input: TokenStream) -> TokenStream {
 
     // INSERT Attributes -> field names
     let attributes = fields.iter().map(|field| &field.ident);
+    let attributes_ex = fields.iter().map(|field| &field.ident);
     let attributes_vec: Vec<String> = fields
         .iter()
         .map(|field| {
@@ -191,6 +192,7 @@ pub fn derive_from_struct_psql(input: TokenStream) -> TokenStream {
 
     // UPDATE Attributes -> field names for
     let attributes_update = fields.iter().map(|field| &field.ident);
+    let attributes_update_ex = fields.iter().map(|field| &field.ident);
     // name = $2, hostname = $3
     let pairs: String = attributes_vec
         .iter()
@@ -230,6 +232,23 @@ pub fn derive_from_struct_psql(input: TokenStream) -> TokenStream {
                 Ok(res)
             }
 
+            pub async fn insert_ex<'e,E>(&self, executor: E, table: &str) -> sqlx::Result<()>
+            where
+                E: sqlx::Executor<'e,Database = sqlx::Postgres>
+            {
+                let sql = self.insert_query(table);
+
+                // let mut pool = pool;
+                sqlx::query(&sql)
+                #(
+                    .bind(&self.#attributes_ex) //         let #field_name: #field_type = Default::default();
+                )*
+                    .execute(executor)
+                    .await?;
+
+                Ok(())
+            }
+
             fn update_query(&self, table: &str) -> String
             {
                 let sqlquery = format!("update {} set {} where id = $1 returning *", table, #pairs);
@@ -253,6 +272,23 @@ pub fn derive_from_struct_psql(input: TokenStream) -> TokenStream {
                     .await?;
 
                 Ok(res)
+            }
+
+
+            pub async fn update_ex<'e,E>(&self, executor: E, table: &str) -> sqlx::Result<()>
+            where
+                E: sqlx::Executor<'e,Database = sqlx::Postgres>
+            {
+                let sql = self.update_query(table);
+
+                sqlx::query(&sql)
+                #(
+                    .bind(&self.#attributes_update_ex)
+                )*
+                    .execute(executor)
+                    .await?;
+
+                Ok(())
             }
         }
     })
