@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.0 - 2024-01-24
+
+- added method `insert_ex` and `update_ex` to handle executor ( to be used in transaction )
+
 ## 0.9.1 - 2024-01-15
 
 - removed `useless question mark` in `SqliteInsert` macro
