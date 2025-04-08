@@ -25,5 +25,5 @@ postgres = [ "sqlx/postgres" ]
 
 
 [dev-dependencies]
-tokio = { version = "1.19", features= ["rt-multi-thread",  "macros"] }
+tokio = { version = "1.38", features= ["rt-multi-thread",  "macros"] }
 sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "macros", "sqlite", "postgres"] }
