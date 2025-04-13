@@ -232,21 +232,24 @@ pub fn derive_from_struct_psql(input: TokenStream) -> TokenStream {
                 Ok(res)
             }
 
-            pub async fn insert_ex<'e,E>(&self, executor: E, table: &str) -> sqlx::Result<()>
+            pub async fn insert_ex<'e,E, T>(&self, executor: E, table: &str) -> sqlx::Result<T>
             where
-                E: sqlx::Executor<'e,Database = sqlx::Postgres>
+                E: sqlx::Executor<'e,Database = sqlx::Postgres>,
+                T: Send,
+                T: for<'c> sqlx::FromRow<'c, sqlx::postgres::PgRow>,
+                T: std::marker::Unpin
             {
                 let sql = self.insert_query(table);
 
                 // let mut pool = pool;
-                sqlx::query(&sql)
+                let res = sqlx::query_as::<_,T>(&sql)
                 #(
                     .bind(&self.#attributes_ex) //         let #field_name: #field_type = Default::default();
                 )*
-                    .execute(executor)
+                    .fetch_one(executor)
                     .await?;
 
-                Ok(())
+                Ok(res)
             }
 
             fn update_query(&self, table: &str) -> String
@@ -275,20 +278,23 @@ pub fn derive_from_struct_psql(input: TokenStream) -> TokenStream {
             }
 
 
-            pub async fn update_ex<'e,E>(&self, executor: E, table: &str) -> sqlx::Result<()>
+            pub async fn update_ex<'e,E,T>(&self, executor: E, table: &str) -> sqlx::Result<T>
             where
-                E: sqlx::Executor<'e,Database = sqlx::Postgres>
+                E: sqlx::Executor<'e,Database = sqlx::Postgres>,
+                T: Send,
+                T: for<'c> sqlx::FromRow<'c, sqlx::postgres::PgRow>,
+                T: std::marker::Unpin
             {
                 let sql = self.update_query(table);
 
-                sqlx::query(&sql)
+                let res:T = sqlx::query_as::<_,T>(&sql)
                 #(
                     .bind(&self.#attributes_update_ex)
                 )*
-                    .execute(executor)
+                    .fetch_one(executor)
                     .await?;
 
-                Ok(())
+                Ok(res)
             }
         }
     })

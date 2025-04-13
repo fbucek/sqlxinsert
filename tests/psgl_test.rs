@@ -41,15 +41,21 @@ async fn test_macro_psql_insert() {
 
     // Reset database
     let drop_table = "DROP TABLE IF EXISTS cars";
-    sqlx::query(drop_table).execute(&pool).await.unwrap();
+    sqlx::query(drop_table)
+        .execute(&pool)
+        .await
+        .expect("Failed to drop table");
 
-    let create_table = "create table cars (
+    let create_table = "CREATE TABLE cars (
         id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
         color TEXT
     )";
 
-    sqlx::query(create_table).execute(&pool).await.unwrap();
+    sqlx::query(create_table)
+        .execute(&pool)
+        .await
+        .expect("Failed to create table");
 
     // Fill data
     let car_skoda_res = car_skoda
@@ -91,15 +97,21 @@ async fn test_macro_psql_update() {
 
     // Reset database
     let drop_table = "DROP TABLE IF EXISTS cars2";
-    sqlx::query(drop_table).execute(&pool).await.unwrap();
+    sqlx::query(drop_table)
+        .execute(&pool)
+        .await
+        .expect("Failed to drop table");
 
-    let create_table = "create table cars2 (
+    let create_table = "CREATE TABLE cars2 (
         id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
         color TEXT
     )";
 
-    sqlx::query(create_table).execute(&pool).await.unwrap();
+    sqlx::query(create_table)
+        .execute(&pool)
+        .await
+        .expect("Failed to create table");
 
     // Fill data
     let car_skoda_res = car_skoda
