@@ -6,7 +6,7 @@ use self::proc_macro::TokenStream;
 
 use quote::quote;
 
-use syn::{parse_macro_input, Data, DataStruct, DeriveInput, Fields};
+use syn::{Data, DataStruct, DeriveInput, Fields, parse_macro_input};
 
 use crate::common::dollar_values;
 
