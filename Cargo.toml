@@ -1,8 +1,8 @@
 [package]
 name = "sqlxinsert"
-version = "0.10.0"
+version = "0.12.0"
 authors = ["Filip Bucek <fbucek@invloop.cz>"]
-edition = "2018"
+edition = "2024"
 license = "MIT"
 description = "Sqlx derive macro for simpler inserts"
 repository = "https://github.com/fbucek/sqlxinsert"
@@ -25,5 +25,5 @@ postgres = [ "sqlx/postgres" ]
 
 
 [dev-dependencies]
-tokio = { version = "1.19", features= ["rt-multi-thread",  "macros"] }
+tokio = { version = "1", features= ["rt-multi-thread",  "macros"] }
 sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "macros", "sqlite", "postgres"] }

@@ -3,6 +3,8 @@
 all: check rmdocker initdocker test rmdocker doc
 testall: rmdocker initdocker test rmdocker
 
+
+
 # Docker used only for testing postgres database
 initdocker:
 	docker-compose up -d
@@ -15,7 +17,13 @@ rmdocker:
 build:
 	cargo build --all-targets
 test:
+	docker-compose up -d
+	sleep 4
 	cargo test
+	docker stop sqlxinsert-db-test
+	docker rm sqlxinsert-db-test
+
+
 check:
 	cargo check
 	cargo clippy
